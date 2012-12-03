@@ -2,7 +2,7 @@
 
 **Remote** is a simple tool to work in local files while consuming an API from a remote server. An easy reverse proxy in Node, if you will.
 
-It serves your static files locally and *bounces* some requests to an external server. It aims to serve the dreaded **cross domain request** problem, so you can freely *ajax* like you have a local server-side.
+It serves your static files locally and *bounces* some requests to an external server. It aims to solve the dreaded **cross domain request** problem, so you can freely *ajax* like you have a local server-side.
 
 You determine which requests are *bounced* by writing some regex in a small json configuration file. 
 
