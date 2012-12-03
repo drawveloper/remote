@@ -1,0 +1,45 @@
+{
+    "name" : "remote",
+    "description" : "Work on client-side files with a remote API server transparently",
+    "version" : "0.0.1",
+    "repository" : {
+        "type" : "git",
+        "url" : "git://github.com/gadr90/remote.git"
+    },
+    "main" : "app.js",
+    "keywords" : [
+        "http",
+        "parse",
+        "host",
+        "route",
+        "router",
+        "transparent",
+		"remote",
+		"api"
+    ],
+    "dependencies" : {
+        "bouncy" : "1.3.x",
+        "node-static" : "0.6.x",
+        "commander" : "1.1.x",
+        "underscore" : "1.4.x"
+    },
+    "devDependencies" : {
+        "coffee-script" : "1.4.x"
+    },
+    "engines" : {
+        "node" : ">=0.4.0"
+    },
+    "license" : "MIT",
+    "contributors" : [
+		{
+		    "name" : "Guilherme Rodrigues",
+		    "email" : "guilherme.rodrigues@vtex.com.br",
+		    "url" : "http://www.vtex.com.br"
+		},
+		{
+		    "name" : "Breno Calazans",
+		    "email" : "breno@vtex.com.br",
+		    "url" : "http://www.vtex.com.br"
+		}
+	]
+}
