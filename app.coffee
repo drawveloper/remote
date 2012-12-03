@@ -31,7 +31,7 @@ _u.extend options, defaults, _u.pick(program, 'file')
 
 # Read configuration file and override any options with it
 try
-  fileConfig = require(options.file)
+  fileConfig = JSON.parse(require('fs').readFileSync(options.file))
   if (fileConfig)
     _u.extend options, fileConfig
 catch e
