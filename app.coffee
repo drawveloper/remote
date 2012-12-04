@@ -15,7 +15,7 @@ defaults =
   mock: true
 
 # Commander options
-program.version("0.0.4")
+program.version("0.0.5")
   .option("-d, --directory [path]", "Path to local static files directory [./]")
   .option("-h, --host [127.0.0.1]", "Host of the remote API [127.0.0.1]")
   .option("-p, --port [80]", "Port of the remote API [80]")
@@ -69,6 +69,14 @@ if options.bounces or options.mocks
   # Start serving the files in the local bounce port
   staticServer.listen options.localBouncePort
 
+  # Utility function to read mock from file
+  readMock = (filePath) ->
+    try
+      return JSON.parse fs.readFileSync(filePath)
+    catch e
+      console.error "No file found!", e
+      return undefined
+
   # Bounce requests
   bouncy((req, bounce) ->
 
@@ -82,10 +90,11 @@ if options.bounces or options.mocks
     bounces = _u.filter( options.bounces, (bounce) -> (new RegExp(bounce).test req.url ) )
 
     if options.mock and mock
-      console.log 'Mocking url: ', req.url, 'Mock response: ', mock.response
+      mockJSON = mock.response ? readMock(mock.file)
+      console.log 'Mocking url: ', req.url, 'Mock response: ', mockJSON
       mockResponse = bounce.respond()
       # Simply return the mock data
-      mockResponse.end(JSON.stringify mock.response)
+      mockResponse.end(JSON.stringify mockJSON)
     else if bounces?.length > 0
       console.log 'Bouncing to remote: ', req.url, ' - Matched bounce rules: ', bounces
       req.on('error', (e) ->

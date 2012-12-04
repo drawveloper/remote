@@ -39,7 +39,8 @@ Sample `remote.json` config file:
 			{	
 				"url" : ".*/api/awesomes/.*",
 				"unless" : ".*/api/awesomes/not",
-				"response" : {"level":"awesome"}
+				"response" : {"level":"awesome"},
+				"file" : "./awesome-mock.json"
 			}
 		]
 	}
@@ -49,6 +50,8 @@ In this case, any call to `localhost:3000/api/(...)` will be *bounced* to `remot
 Mocks take precedence over bounces, however. so, exceptionally, a call to `localhost:3000/api/awesomes/` will not be *bounced* and will, instead, return the mock JSON `{'level':'awesome'}`.
 
 You can define an `unless` property in the mock to prevent some specific *URLs* from being matched by a too-generic regex rule. In this case, a call to `localhost:3000/api/awesomes/not` **will not** be responded with the mock data. (And will rather be bounced, because it matches a *bounce* rule)
+
+If you wouldn't like to define an inline mock, you may use a `file` attribute with the path to a json file containing the mock, instead of `response`. If both are defined, `response` takes precedence.
 
 Command line options take precedence over `remote.json` options.
 
