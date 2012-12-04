@@ -14,7 +14,7 @@ defaults =
   mock: true
 
 # Commander options
-program.version("0.0.1")
+program.version("0.0.4")
   .option("-d, --directory [path]", "Path to local static files directory [./]")
   .option("-h, --host [127.0.0.1]", "Host of the remote API [127.0.0.1]")
   .option("-p, --port [80]", "Port of the remote API [80]")
@@ -64,7 +64,11 @@ if options.bounces
   bouncy((req, bounce) ->
 
     # Test if this request fits a mock (and *doesnt* fit its "unless" regex)
-    mock = _u.find( options.mocks, (mock) -> (new RegExp(mock.url).test req.url) and not (new RegExp(mock.unless).test req.url) )
+    mock = _u.find( options.mocks, (mock) ->
+      matchURL = (new RegExp(mock.url).test req.url)
+      matchUnless = if mock.unless then (new RegExp(mock.unless).test req.url) else false
+      return matchURL and not matchUnless
+    )
     # Test which bounce rules this request fits
     bounces = _u.filter( options.bounces, (bounce) -> (new RegExp(bounce).test req.url ) )
 
