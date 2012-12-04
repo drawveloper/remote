@@ -3,13 +3,14 @@ program = require("commander")
 _u = require("underscore")
 http = require("http")
 bouncy = require("bouncy")
+fs = require('fs')
 # Default configuration options
 defaults =
   directory: './'
   host: '127.0.0.1'
-  port: '80'
+  port: 80
   hostname: 'localhost'
-  localport: '3000'
+  localport: 3000
   file: './remote.json'
   mock: true
 
@@ -24,29 +25,37 @@ program.version("0.0.4")
   .option("-f, --file [remote.json]", "Specific configuration file [remote.json]")
   .parse process.argv
 
-
 options = {}
 # Initialize options with file name
 _u.extend options, defaults, _u.pick(program, 'file')
 
 # Read configuration file and override any options with it
-try
-  fileConfig = JSON.parse(require('fs').readFileSync(options.file))
-  if (fileConfig)
-    _u.extend options, fileConfig
-catch e
-  console.error "No configuration file found!", e
+readOptions = (filePath) ->
+  try
+    fileConfig = JSON.parse(fs.readFileSync(filePath))
+    _u.extend(options, fileConfig) if fileConfig
+  catch e
+    console.error "No configuration file found!", e
+    options.file = undefined
+  finally
+    # Override any file options with command line options
+    _u.extend(options, _u.pick(program, 'directory', 'host', 'port', 'hostname', 'localport', 'mock'))
+    # Show the user the selected options
+    console.log options
 
-# Override any file options with command line options
-_u.extend options, _u.pick(program, 'directory', 'host', 'port', 'hostname', 'localport', 'mock')
+readOptions(options.file)
+
+# If file is defined at this point, it has been read.
+if options.file
+  fs.watchFile options.file, { persistent: true, interval: 1000 }, (curr, prev) ->
+    unless curr.size is prev.size and curr.mtime.getTime() is prev.mtime.getTime()
+      console.log "Config file changed - updating options."
+      readOptions(options.file)
 
 # Serve static files at localport + 1
 options.localBouncePort = options.localport*1 + 1
 # Convert "mock" attribute to boolean
 options.mock = if (not options.mock or options.mock is 'false') then false else true
-
-# Show the user the selected options
-console.log options
 
 # Serve static files
 fileServer = new (nodestatic.Server)(options.directory, { cache: 0 })
@@ -55,8 +64,8 @@ staticServer = http.createServer((request, response) ->
     fileServer.serve request, response
 )
 
-# If user defined bounces ( why else would you use this? )
-if options.bounces
+# If user defined bounces or mocks ( why else would you use this? )
+if options.bounces or options.mocks
   # Start serving the files in the local bounce port
   staticServer.listen options.localBouncePort
 
