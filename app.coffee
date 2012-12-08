@@ -16,9 +16,9 @@ defaults =
   mock: true
 
 # Commander options
-program.version("0.0.6")
+program.version("0.0.7")
   .option("-d, --directory [path]", "Path to local static files directory [./]")
-  .option("-h, --host [127.0.0.1]", "Host of the remote API [127.0.0.1]")
+  .option("-j, --host [127.0.0.1]", "Host of the remote API [127.0.0.1]")
   .option("-p, --port [80]", "Port of the remote API [80]")
   .option("-n, --hostname [localhost]", "Hostname to serve the files in [localhost]")
   .option("-l, --localport [3000]", "Port of the local server [3000]")
@@ -82,12 +82,14 @@ staticServer = http.createServer( (req, res) ->
 staticServer.listen options.localBouncePort
 
 # Utility function to read mock from file
-readMock = (filePath) ->
+readMock = (filePath, callback) ->
   try
-    return JSON.parse fs.readFileSync(filePath)
+    fs.readFile(filePath, (err, data) ->
+      if err then callback(err) else callback(JSON.parse data)
+    )
   catch e
     console.error "No file found!", e
-    return undefined
+    callback(e)
 
 # Bounce requests
 bouncy((req, bounce) ->
@@ -103,12 +105,19 @@ bouncy((req, bounce) ->
     (bounce) -> (new RegExp(bounce).test req.url ) ) if options.bounces
 
   if options.mock and mock
-    mockJSON = mock.response ? readMock(mock.file)
-    console.log 'Mocking url: ', req.url, 'Mock response: ', mockJSON
-    mockResponse = bounce.respond()
-    # Simply return the mock data
-    mockResponse.write(JSON.stringify mockJSON)
-    mockResponse.end()
+    # Handler to end this response with a mock
+    endResponse = (data) ->
+      console.log 'Mocking url: ', req.url, 'Mock response: ', data
+      mockResponse = bounce.respond()
+      # Simply return the mock data
+      mockResponse.write(JSON.stringify data)
+      mockResponse.end()
+
+    if mock.response
+      endResponse(mock.response)
+    else
+      readMock(mock.file, endResponse)
+
   else if bounces?.length > 0
     console.log 'Bouncing to remote: ', req.url, ' - Matched bounce rules: ', bounces
     req.on('error', (e) ->

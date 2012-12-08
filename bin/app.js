@@ -26,7 +26,7 @@
         mock: true
     };
 
-    program.version("0.0.6").option("-d, --directory [path]", "Path to local static files directory [./]").option("-h, --host [127.0.0.1]", "Host of the remote API [127.0.0.1]").option("-p, --port [80]", "Port of the remote API [80]").option("-n, --hostname [localhost]", "Hostname to serve the files in [localhost]").option("-l, --localport [3000]", "Port of the local server [3000]").option("-m, --mock [true]", "Whether to use the mock rules [true]").option("-f, --file [remote.json]", "Specific configuration file [remote.json]").parse(process.argv);
+    program.version("0.0.7").option("-d, --directory [path]", "Path to local static files directory [./]").option("-j, --host [127.0.0.1]", "Host of the remote API [127.0.0.1]").option("-p, --port [80]", "Port of the remote API [80]").option("-n, --hostname [localhost]", "Hostname to serve the files in [localhost]").option("-l, --localport [3000]", "Port of the local server [3000]").option("-m, --mock [true]", "Whether to use the mock rules [true]").option("-f, --file [remote.json]", "Specific configuration file [remote.json]").parse(process.argv);
 
     options = {};
 
@@ -84,17 +84,23 @@
 
     staticServer.listen(options.localBouncePort);
 
-    readMock = function(filePath) {
+    readMock = function(filePath, callback) {
         try {
-            return JSON.parse(fs.readFileSync(filePath));
+            return fs.readFile(filePath, function(err, data) {
+                if (err) {
+                    return callback(err);
+                } else {
+                    return callback(JSON.parse(data));
+                }
+            });
         } catch (e) {
             console.error("No file found!", e);
-            return void 0;
+            return callback(e);
         }
     };
 
     bouncy(function(req, bounce) {
-        var bounces, mock, mockJSON, mockResponse, _ref;
+        var bounces, endResponse, mock;
         if (options.mocks) {
             mock = _u.find(options.mocks, function(mock) {
                 var matchURL, matchUnless;
@@ -109,11 +115,18 @@
             });
         }
         if (options.mock && mock) {
-            mockJSON = (_ref = mock.response) != null ? _ref : readMock(mock.file);
-            console.log('Mocking url: ', req.url, 'Mock response: ', mockJSON);
-            mockResponse = bounce.respond();
-            mockResponse.write(JSON.stringify(mockJSON));
-            return mockResponse.end();
+            endResponse = function(data) {
+                var mockResponse;
+                console.log('Mocking url: ', req.url, 'Mock response: ', data);
+                mockResponse = bounce.respond();
+                mockResponse.write(JSON.stringify(data));
+                return mockResponse.end();
+            };
+            if (mock.response) {
+                return endResponse(mock.response);
+            } else {
+                return readMock(mock.file, endResponse);
+            }
         } else if ((bounces != null ? bounces.length : void 0) > 0) {
             console.log('Bouncing to remote: ', req.url, ' - Matched bounce rules: ', bounces);
             req.on('error', function(e) {
