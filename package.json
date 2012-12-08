@@ -1,7 +1,7 @@
 {
   "name": "remote",
   "description": "Work on client-side files with a remote API server transparently",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "repository": {
     "type": "git",
     "url": "git://github.com/gadr90/remote.git"
@@ -22,7 +22,7 @@
   ],
   "dependencies": {
     "bouncy": "1.3.x",
-    "node-static": "0.6.x",
+    "send": "0.1.0",
     "commander": "1.1.1",
     "underscore": "1.4.x"
   },

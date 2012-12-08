@@ -1,4 +1,5 @@
-nodestatic = require("node-static")
+send = require("send")
+url = require("url")
 program = require("commander")
 _u = require("underscore")
 http = require("http")
@@ -15,7 +16,7 @@ defaults =
   mock: true
 
 # Commander options
-program.version("0.0.5")
+program.version("0.0.6")
   .option("-d, --directory [path]", "Path to local static files directory [./]")
   .option("-h, --host [127.0.0.1]", "Host of the remote API [127.0.0.1]")
   .option("-p, --port [80]", "Port of the remote API [80]")
@@ -31,6 +32,7 @@ _u.extend options, defaults, _u.pick(program, 'file')
 
 # Read configuration file and override any options with it
 readOptions = (filePath) ->
+  options.bounces = options.mocks = undefined
   try
     fileConfig = JSON.parse(fs.readFileSync(filePath))
     _u.extend(options, fileConfig) if fileConfig
@@ -58,58 +60,66 @@ options.localBouncePort = options.localport*1 + 1
 options.mock = if (not options.mock or options.mock is 'false') then false else true
 
 # Serve static files
-fileServer = new (nodestatic.Server)(options.directory, { cache: 0 })
-staticServer = http.createServer((request, response) ->
-  request.addListener "end", ->
-    fileServer.serve request, response
+staticServer = http.createServer( (req, res) ->
+  error = (err) ->
+    res.statusCode = err.status || 500
+    console.error(err.message)
+    res.end(err.message)
+
+  redirect = ->
+    res.statusCode = 301
+    res.setHeader('Location', req.url + '/')
+    res.end('Redirecting to ' + req.url + '/')
+
+  send(req, url.parse(req.url).pathname)
+    .root(options.directory)
+    .on('error', error)
+    .on('directory', redirect)
+    .pipe(res)
 )
 
-# If user defined bounces or mocks ( why else would you use this? )
-if options.bounces or options.mocks
-  # Start serving the files in the local bounce port
-  staticServer.listen options.localBouncePort
+# Start serving the files in the local bounce port
+staticServer.listen options.localBouncePort
 
-  # Utility function to read mock from file
-  readMock = (filePath) ->
-    try
-      return JSON.parse fs.readFileSync(filePath)
-    catch e
-      console.error "No file found!", e
-      return undefined
+# Utility function to read mock from file
+readMock = (filePath) ->
+  try
+    return JSON.parse fs.readFileSync(filePath)
+  catch e
+    console.error "No file found!", e
+    return undefined
 
-  # Bounce requests
-  bouncy((req, bounce) ->
+# Bounce requests
+bouncy((req, bounce) ->
+  # Test if this request fits a mock (and *doesnt* fit its "unless" regex)
+  mock = _u.find( options.mocks, (mock) ->
+    matchURL = (new RegExp(mock.url).test req.url)
+    matchUnless = if mock.unless then (new RegExp(mock.unless).test req.url) else false
+    return matchURL and not matchUnless
+  ) if options.mocks
 
-    # Test if this request fits a mock (and *doesnt* fit its "unless" regex)
-    mock = _u.find( options.mocks, (mock) ->
-      matchURL = (new RegExp(mock.url).test req.url)
-      matchUnless = if mock.unless then (new RegExp(mock.unless).test req.url) else false
-      return matchURL and not matchUnless
+  # Test which bounce rules this request fits
+  bounces = _u.filter( options.bounces,
+    (bounce) -> (new RegExp(bounce).test req.url ) ) if options.bounces
+
+  if options.mock and mock
+    mockJSON = mock.response ? readMock(mock.file)
+    console.log 'Mocking url: ', req.url, 'Mock response: ', mockJSON
+    mockResponse = bounce.respond()
+    # Simply return the mock data
+    mockResponse.write(JSON.stringify mockJSON)
+    mockResponse.end()
+  else if bounces?.length > 0
+    console.log 'Bouncing to remote: ', req.url, ' - Matched bounce rules: ', bounces
+    req.on('error', (e) ->
+      console.error('Problem with the bounced request... ', e)
+      req.end()
     )
-    # Test which bounce rules this request fits
-    bounces = _u.filter( options.bounces, (bounce) -> (new RegExp(bounce).test req.url ) )
+    bounce options.host, options.port
+  else
+    console.log 'Serving static file: ', req.url
+    bounce options.localBouncePort
 
-    if options.mock and mock
-      mockJSON = mock.response ? readMock(mock.file)
-      console.log 'Mocking url: ', req.url, 'Mock response: ', mockJSON
-      mockResponse = bounce.respond()
-      # Simply return the mock data
-      mockResponse.end(JSON.stringify mockJSON)
-    else if bounces?.length > 0
-      console.log 'Bouncing to remote: ', req.url, ' - Matched bounce rules: ', bounces
-      req.on('error', (e) ->
-        console.error('Problem with the bounced request... ', e)
-        req.end()
-      )
-      bounce options.host, options.port
-    else
-      console.log 'Serving static file: ', req.url
-      bounce options.localBouncePort
-
-  ).listen options.localport, options.hostname
-# else, simply serve the static files.
-else
-  console.log "Not bouncing!"
-  staticServer.listen options.localport, options.hostname
+).listen options.localport, options.hostname
 
 console.log "Serving local files at " + options.hostname + ":" + options.localport

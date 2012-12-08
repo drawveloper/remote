@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 (function() {
-    var bouncy, defaults, fileServer, fs, http, nodestatic, options, program, readMock, readOptions, staticServer, _u;
+    var bouncy, defaults, fs, http, options, program, readMock, readOptions, send, staticServer, url, _u;
 
-    nodestatic = require("node-static");
+    send = require("send");
+
+    url = require("url");
 
     program = require("commander");
 
@@ -24,7 +26,7 @@
         mock: true
     };
 
-    program.version("0.0.5").option("-d, --directory [path]", "Path to local static files directory [./]").option("-h, --host [127.0.0.1]", "Host of the remote API [127.0.0.1]").option("-p, --port [80]", "Port of the remote API [80]").option("-n, --hostname [localhost]", "Hostname to serve the files in [localhost]").option("-l, --localport [3000]", "Port of the local server [3000]").option("-m, --mock [true]", "Whether to use the mock rules [true]").option("-f, --file [remote.json]", "Specific configuration file [remote.json]").parse(process.argv);
+    program.version("0.0.6").option("-d, --directory [path]", "Path to local static files directory [./]").option("-h, --host [127.0.0.1]", "Host of the remote API [127.0.0.1]").option("-p, --port [80]", "Port of the remote API [80]").option("-n, --hostname [localhost]", "Hostname to serve the files in [localhost]").option("-l, --localport [3000]", "Port of the local server [3000]").option("-m, --mock [true]", "Whether to use the mock rules [true]").option("-f, --file [remote.json]", "Specific configuration file [remote.json]").parse(process.argv);
 
     options = {};
 
@@ -32,6 +34,7 @@
 
     readOptions = function(filePath) {
         var fileConfig;
+        options.bounces = options.mocks = void 0;
         try {
             fileConfig = JSON.parse(fs.readFileSync(filePath));
             if (fileConfig) {
@@ -64,58 +67,65 @@
 
     options.mock = !options.mock || options.mock === 'false' ? false : true;
 
-    fileServer = new nodestatic.Server(options.directory, {
-        cache: 0
-    });
-
-    staticServer = http.createServer(function(request, response) {
-        return request.addListener("end", function() {
-            return fileServer.serve(request, response);
-        });
-    });
-
-    if (options.bounces || options.mocks) {
-        staticServer.listen(options.localBouncePort);
-        readMock = function(filePath) {
-            try {
-                return JSON.parse(fs.readFileSync(filePath));
-            } catch (e) {
-                console.error("No file found!", e);
-                return void 0;
-            }
+    staticServer = http.createServer(function(req, res) {
+        var error, redirect;
+        error = function(err) {
+            res.statusCode = err.status || 500;
+            console.error(err.message);
+            return res.end(err.message);
         };
-        bouncy(function(req, bounce) {
-            var bounces, mock, mockJSON, mockResponse, _ref;
+        redirect = function() {
+            res.statusCode = 301;
+            res.setHeader('Location', req.url + '/');
+            return res.end('Redirecting to ' + req.url + '/');
+        };
+        return send(req, url.parse(req.url).pathname).root(options.directory).on('error', error).on('directory', redirect).pipe(res);
+    });
+
+    staticServer.listen(options.localBouncePort);
+
+    readMock = function(filePath) {
+        try {
+            return JSON.parse(fs.readFileSync(filePath));
+        } catch (e) {
+            console.error("No file found!", e);
+            return void 0;
+        }
+    };
+
+    bouncy(function(req, bounce) {
+        var bounces, mock, mockJSON, mockResponse, _ref;
+        if (options.mocks) {
             mock = _u.find(options.mocks, function(mock) {
                 var matchURL, matchUnless;
                 matchURL = new RegExp(mock.url).test(req.url);
                 matchUnless = mock.unless ? new RegExp(mock.unless).test(req.url) : false;
                 return matchURL && !matchUnless;
             });
+        }
+        if (options.bounces) {
             bounces = _u.filter(options.bounces, function(bounce) {
                 return new RegExp(bounce).test(req.url);
             });
-            if (options.mock && mock) {
-                mockJSON = (_ref = mock.response) != null ? _ref : readMock(mock.file);
-                console.log('Mocking url: ', req.url, 'Mock response: ', mockJSON);
-                mockResponse = bounce.respond();
-                return mockResponse.end(JSON.stringify(mockJSON));
-            } else if ((bounces != null ? bounces.length : void 0) > 0) {
-                console.log('Bouncing to remote: ', req.url, ' - Matched bounce rules: ', bounces);
-                req.on('error', function(e) {
-                    console.error('Problem with the bounced request... ', e);
-                    return req.end();
-                });
-                return bounce(options.host, options.port);
-            } else {
-                console.log('Serving static file: ', req.url);
-                return bounce(options.localBouncePort);
-            }
-        }).listen(options.localport, options.hostname);
-    } else {
-        console.log("Not bouncing!");
-        staticServer.listen(options.localport, options.hostname);
-    }
+        }
+        if (options.mock && mock) {
+            mockJSON = (_ref = mock.response) != null ? _ref : readMock(mock.file);
+            console.log('Mocking url: ', req.url, 'Mock response: ', mockJSON);
+            mockResponse = bounce.respond();
+            mockResponse.write(JSON.stringify(mockJSON));
+            return mockResponse.end();
+        } else if ((bounces != null ? bounces.length : void 0) > 0) {
+            console.log('Bouncing to remote: ', req.url, ' - Matched bounce rules: ', bounces);
+            req.on('error', function(e) {
+                console.error('Problem with the bounced request... ', e);
+                return req.end();
+            });
+            return bounce(options.host, options.port);
+        } else {
+            console.log('Serving static file: ', req.url);
+            return bounce(options.localBouncePort);
+        }
+    }).listen(options.localport, options.hostname);
 
     console.log("Serving local files at " + options.hostname + ":" + options.localport);
 
