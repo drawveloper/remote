@@ -1,13 +1,13 @@
 {
   "name": "remote",
   "description": "Work on client-side files with a remote API server transparently",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "repository": {
     "type": "git",
     "url": "git://github.com/gadr90/remote.git"
   },
-  "main": "app.coffee",
-  "bin": "./bin/app.js",
+  "main": "./libs/remote.coffee",
+  "bin": "./bin/remote.js",
   "keywords": [
     "http",
     "parse",
@@ -34,7 +34,6 @@
   },
   "license": "BSD",
   "contributors": [
-    "Guilherme Rodrigues <guilherme.rodrigues@vtex.com.br> (http://www.vtex.com.br)",
     "Breno Calazans <breno@vtex.com.br> (http://www.vtex.com.br)"
   ],
   "readmeFilename": "README.md",
