@@ -5,7 +5,7 @@ class ProxyServer
   constructor: (@options) ->
 
   # Utility function to read mock from file
-  readMock: (filePath, callback) =>
+  readFile: (filePath, callback) =>
     try
       fs.readFile(filePath, (err, data) ->
         if err then callback(err) else callback(JSON.parse data)
@@ -14,44 +14,63 @@ class ProxyServer
       console.error "No file found!", e
       callback(e)
 
+  findMapping: (url) =>
+    if @options.mapping is false
+      return undefined
+
+    for key, value of @options.mappings
+      return value if (new RegExp(key).test(url))
+
+    return undefined
+
+  findBounce: (url) =>
+    if @options.bounces is undefined or @options.bounces.length is 0
+      return undefined
+
+    for bounce of @options.bounces
+      return bounce if (new RegExp(bounce).test(url))
+
+    return undefined
+
+  applyHeaders: (res) =>
+
+  # Handler to end this response with a mock
+  serveMapping: (data, res) ->
+    res.write(JSON.stringify data)
+    res.end()
+
   start: =>
     # Bounce requests
     bouncy((req, res, bounce) =>
-      # Test if this request fits a mock (and *doesnt* fit its "unless" regex)
-      mock = _u.find( @options.mocks, (mock) ->
-        matchURL = (new RegExp(mock.url).test req.url)
-        matchUnless = if mock.unless then (new RegExp(mock.unless).test req.url) else false
-        return matchURL and not matchUnless
-      ) if @options.mocks
+      req.on('error', (e) ->
+        console.error('Problem with the bounced request... ', e)
+        req.end()
+      )
 
-      # Test which bounce rules this request fits
-      bounces = _u.filter( @options.bounces,
-      (bounce) -> (new RegExp(bounce).test req.url ) ) if @options.bounces
+      # Test if this request fits a mapping
+      mappingPath = @findMapping(req.url)
 
-      if @options.mock and mock
-        # Handler to end this response with a mock
-        endResponse = (data) ->
-          console.log 'Mocking url: ', req.url, 'Mock response: ', data
-          mockResponse = bounce.respond()
-          # Simply return the mock data
-          mockResponse.write(JSON.stringify data)
-          mockResponse.end()
+      # Test what bounce rule this request fits first
+      matchedBounce = @findBounce(req.url)
 
-        if mock.response
-          endResponse(mock.response)
-        else
-          @readMock(mock.file, endResponse)
+      bounceOption = if @options.bounceToRemote then 'remote' else 'local'
+      defaultOption = if @options.bounceToRemote then 'local' else 'remote'
 
-      else if @options.bounces and bounces?.length > 0
-        console.log 'Bouncing to remote: ', req.url, ' - Matched bounce rules: ', bounces
-        req.on('error', (e) ->
-          console.error('Problem with the bounced request... ', e)
-          req.end()
-        )
-        bounce @options.host, @options.port
+      bounceHost = @options[bounceOption + 'host']
+      bouncePort = @options[bounceOption + 'port']
+      defaultHost = @options[defaultOption + 'host']
+      defaultPort = @options[defaultOption + 'port']
+
+      @applyHeaders(res)
+
+      if mappingPath
+        @serveMapping()
+      else if matchedBounce
+        console.log 'Bouncing to remote host: ', req.url, ' - Matched bounce rule: ', matchedBounce
+        bounce bounceHost, bouncePort
       else
-        console.log 'Serving static file: ', req.url
-        bounce @options.localBouncePort
+        console.log 'Bouncing to default option: ', req.url
+        bounce defaultHost, defaultPort
 
     ).listen @options.localport, @options.hostname
 
