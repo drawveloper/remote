@@ -1,6 +1,7 @@
 program = require("commander")
 fs = require('fs')
 _u = require("underscore")
+path = require('path')
 
 class RemoteInitializer
   constructor: (@options) ->
@@ -29,6 +30,8 @@ class RemoteInitializer
 
     # Initialize options with file name
     _u.extend @options, defaults, _u.pick(program, 'file')
+    # Resolve relative path
+    @options.file = path.resolve(process.cwd(), @options.file)
 
     @readOptions(@options.file)
 
@@ -55,8 +58,10 @@ class RemoteInitializer
       console.error "No configuration file found!", e
       @options.file = undefined
     finally
-    # Override any file options with command line options
+      # Override any file options with command line options
       _u.extend(@options, _u.pick(program, 'directory', 'host', 'port', 'hostname', 'localport', 'mock'))
+      # Resolve relative path
+      @options.directory = path.resolve(process.cwd(), @options.directory)
       # Show the user the selected options
       console.log @options
 
