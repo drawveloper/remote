@@ -56,3 +56,14 @@ If you wouldn't like to define an inline mock, you may use a `file` attribute wi
 Command line options take precedence over `remote.json` options.
 
 Have fun!
+
+
+#### Note for Mac OS X users (or: *what to do when I get EMFILE errors*)
+
+OS X has a arbitrarily low limit for the amount of files that a process can open of 256.
+Use the `ulimit` command to check your current limit.
+For sites with large amounts of files, or in any situation when encountering **EMFILE** errors, simply issue:
+
+    ulimit -n 2048
+
+Or any such large value, before turning on remote.
