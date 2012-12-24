@@ -1,0 +1,23 @@
+{
+    "directory":"../",
+    "host":"23.23.23.23",
+    "hostname":"yourhostname.com",
+    "localport": 3000,
+    "bounces":[
+        ".*/api/.*",
+        ".*/api/checkout/pub/.*",
+        ".*/api/checkout/pub/.*/.*",
+        ".*/api/checkout/pub/.*/.*/.*",
+        ".*/transaction",
+        ".*/checkout/gatewayCallback.*",
+        ".*/checkout/cart/add.*"
+    ],
+    "mock":false,
+    "mocks":[
+        {
+            "url":".*/api/checkout/pub/orderForm/.*",
+            "unless": ".*/api/checkout/pub/orderForm/.*/attachments/.*",
+            "file":"./test/mocks/orderFormResponse-cep.json"
+        }
+    ]
+}

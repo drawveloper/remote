@@ -4,19 +4,19 @@ _u = require("underscore")
 path = require('path')
 
 class RemoteInitializer
+  # Default configuration options
+  defaults:
+    directory: './'
+    host: '127.0.0.1'
+    port: 80
+    hostname: 'localhost'
+    localport: 3000
+    file: './remote.json'
+    mock: true
+
   constructor: (@options) ->
 
   initialize: =>
-    # Default configuration options
-    defaults =
-      directory: './'
-      host: '127.0.0.1'
-      port: 80
-      hostname: 'localhost'
-      localport: 3000
-      file: './remote.json'
-      mock: true
-
     # Commander options
     program.version("0.0.7")
       .option("-d, --directory [path]", "Path to local static files directory [./]")
@@ -29,7 +29,7 @@ class RemoteInitializer
       .parse process.argv
 
     # Initialize options with file name
-    _u.extend @options, defaults, _u.pick(program, 'file')
+    _u.extend @options, @defaults, _u.pick(program, 'file')
     # Resolve relative path
     @options.file = path.resolve(process.cwd(), @options.file)
 

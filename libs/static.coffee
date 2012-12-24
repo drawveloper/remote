@@ -3,6 +3,7 @@ send = require("send")
 url = require("url")
 
 class StaticServer
+  staticServer: null
   constructor: (@options) ->
     # Serve static files
     @staticServer = http.createServer( (req, res) =>
