@@ -1,5 +1,5 @@
 {
-    "directory": "../",
+    "directory":"../",
     "host": "walmartv5.vtexcommercebeta.com.br",
     "hostname": "localhost",
     "headers": {
@@ -7,16 +7,15 @@
         "X-Track" : "mkp1"
     },
     "localport": 3000,
+    "bounceToRemote": true,
     "bounces":[
-        "/checkout/bootstrap/.*",
-        "/checkout/cart/.*",
-        "/checkout/css/.*",
-        "/checkout/img/.*",
-        "/checkout/js/.*",
-        "/checkout/locales/.*",
-        "/checkout/orderForm/.*",
-        "/checkout/orderPlaced/.*",
-        "/checkout/templates/.*"
+        ".*/api/.*",
+        ".*/api/checkout/pub/.*",
+        ".*/api/checkout/pub/.*/.*",
+        ".*/api/checkout/pub/.*/.*/.*",
+        ".*/transaction",
+        ".*/checkout/gatewayCallback.*",
+        ".*/checkout/cart/add.*"
     ],
     "mapping": false,
     "mappings": {

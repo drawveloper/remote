@@ -16,7 +16,7 @@ class ProxyServer
 
   start: =>
     # Bounce requests
-    bouncy((req, bounce) =>
+    bouncy((req, res, bounce) =>
       # Test if this request fits a mock (and *doesnt* fit its "unless" regex)
       mock = _u.find( @options.mocks, (mock) ->
         matchURL = (new RegExp(mock.url).test req.url)

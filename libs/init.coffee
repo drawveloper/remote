@@ -10,21 +10,22 @@ class RemoteInitializer
     host: '127.0.0.1'
     port: 80
     hostname: 'localhost'
+    bounceToRemote: false
     localport: 3000
     file: './remote.json'
-    mock: true
+    mapping: false
 
   constructor: (@options) ->
 
   initialize: =>
     # Commander options
-    program.version("0.0.7")
+    program.version("0.1.0")
       .option("-d, --directory [path]", "Path to local static files directory [./]")
       .option("-j, --host [127.0.0.1]", "Host of the remote API [127.0.0.1]")
       .option("-p, --port [80]", "Port of the remote API [80]")
       .option("-n, --hostname [localhost]", "Hostname to serve the files in [localhost]")
       .option("-l, --localport [3000]", "Port of the local server [3000]")
-      .option("-m, --mock [true]", "Whether to use the mock rules [true]")
+      .option("-m, --mapping [false]", "Whether to use the mapping rules [false]")
       .option("-f, --file [remote.json]", "Specific configuration file [remote.json]")
       .parse process.argv
 
@@ -44,13 +45,13 @@ class RemoteInitializer
 
     # Serve static files at localport + 1
     @options.localBouncePort = @options.localport*1 + 1
-    # Convert "mock" attribute to boolean
-    @options.mock = if (not @options.mock or @options.mock is 'false') then false else true
+    # Convert "mapping" attribute to boolean
+    @options.mapping = if (not @options.mapping or @options.mapping is 'false') then false else true
 
 
   # Read configuration file and override any options with it
   readOptions: (filePath) ->
-    @options.bounces = @options.mocks = undefined
+    @options.bounces = @options.mappings = undefined
     try
       fileConfig = JSON.parse(fs.readFileSync(filePath))
       _u.extend(@options, fileConfig) if fileConfig
@@ -59,7 +60,7 @@ class RemoteInitializer
       @options.file = undefined
     finally
       # Override any file options with command line options
-      _u.extend(@options, _u.pick(program, 'directory', 'host', 'port', 'hostname', 'localport', 'mock'))
+      _u.extend(@options, _u.pick(program, 'directory', 'host', 'port', 'hostname', 'localport', 'mapping'))
       # Resolve relative path
       @options.directory = path.resolve(process.cwd(), @options.directory)
       # Show the user the selected options
