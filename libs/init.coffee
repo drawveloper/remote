@@ -1,6 +1,7 @@
 program = require("commander")
 fs = require('fs')
 _u = require("underscore")
+
 class RemoteInitializer
   constructor: (@options) ->
 
