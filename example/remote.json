@@ -1,12 +1,13 @@
 {
     "directory": "../",
-    "host": "walmartv5.vtexcommercebeta.com.br",
-    "hostname": "localhost",
+    "remotehost": "walmartv5.vtexcommercebeta.com.br",
+    "remoteport": 80,
+    "localhost": "localhost",
+    "localport": 3000,
     "headers": {
         "Host": "walmartv5.vtexcommercebeta.com.br",
         "X-Track" : "mkp1"
     },
-    "localport": 3000,
     "bounces":[
         "/checkout/bootstrap/.*",
         "/checkout/cart/.*",

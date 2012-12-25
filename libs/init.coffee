@@ -7,11 +7,12 @@ class RemoteInitializer
   # Default configuration options
   defaults:
     directory: './'
-    host: '127.0.0.1'
-    port: 80
-    hostname: 'localhost'
-    bounceToRemote: false
+    remotehost: '127.0.0.1'
+    remoteport: 80
+    localhost: 'localhost'
     localport: 3000
+    bounceport: 3001
+    bounceToRemote: false
     file: './remote.json'
     mapping: false
 
@@ -21,10 +22,11 @@ class RemoteInitializer
     # Commander options
     program.version("0.1.0")
       .option("-d, --directory [path]", "Path to local static files directory [./]")
-      .option("-j, --host [127.0.0.1]", "Host of the remote API [127.0.0.1]")
-      .option("-p, --port [80]", "Port of the remote API [80]")
-      .option("-n, --hostname [localhost]", "Hostname to serve the files in [localhost]")
-      .option("-l, --localport [3000]", "Port of the local server [3000]")
+      .option("-j, --remotehost [127.0.0.1]", "Host of the remote API [127.0.0.1]")
+      .option("-p, --remoteport [80]", "Port of the remote API [80]")
+      .option("-l, --localhost [localhost]", "Hostname to serve the files in [localhost]")
+      .option("-q, --localport [3000]", "Port of the local proxy server [3000]")
+      .option("-b, --bounceport [3001]", "Port of the local file server [3001]")
       .option("-m, --mapping [false]", "Whether to use the mapping rules [false]")
       .option("-f, --file [remote.json]", "Specific configuration file [remote.json]")
       .parse process.argv
@@ -43,8 +45,6 @@ class RemoteInitializer
           console.log "Config file changed - updating options."
           readOptions(@options.file)
 
-    # Serve static files at localport + 1
-    @options.localBouncePort = @options.localport*1 + 1
     # Convert "mapping" attribute to boolean
     @options.mapping = if (not @options.mapping or @options.mapping is 'false') then false else true
 
@@ -60,7 +60,7 @@ class RemoteInitializer
       @options.file = undefined
     finally
       # Override any file options with command line options
-      _u.extend(@options, _u.pick(program, 'directory', 'host', 'port', 'hostname', 'localport', 'mapping'))
+      _u.extend(@options, _u.pick(program, 'directory', 'remotehost', 'remoteport', 'localhost', 'localport', 'bounceport', 'mapping'))
       # Resolve relative path
       @options.directory = path.resolve(process.cwd(), @options.directory)
       # Show the user the selected options

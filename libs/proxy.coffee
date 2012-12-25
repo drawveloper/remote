@@ -1,18 +1,22 @@
 _u = require("underscore")
 bouncy = require("bouncy")
 fs = require('fs')
+path = require('path')
+
 class ProxyServer
   constructor: (@options) ->
 
   # Utility function to read mock from file
-  readFile: (filePath, callback) =>
+  readMapping: (mapping) =>
     try
-      fs.readFile(filePath, (err, data) ->
-        if err then callback(err) else callback(JSON.parse data)
-      )
+      return JSON.parse(mapping)
+    # Not a JSON string, treat as a path
     catch e
-      console.error "No file found!", e
-      callback(e)
+      try
+        pathMapping = path.resolve(process.cwd(), mapping)
+        return fs.readFileSync(pathMapping, 'utf8')
+      catch e2
+        console.error "Error reading mapping", mapping, e2
 
   findMapping: (url) =>
     if @options.mapping is false
@@ -35,9 +39,7 @@ class ProxyServer
   applyHeaders: (res) =>
 
   # Handler to end this response with a mock
-  serveMapping: (data, res) ->
-    res.write(JSON.stringify data)
-    res.end()
+  serveMapping: (res, data) ->
 
   start: =>
     # Bounce requests
@@ -48,28 +50,27 @@ class ProxyServer
       )
 
       # Test if this request fits a mapping
-      mappingPath = @findMapping(req.url)
+      mappingTarget = @findMapping(req.url)
 
       # Test what bounce rule this request fits first
       matchedBounce = @findBounce(req.url)
 
-      bounceOption = if @options.bounceToRemote then 'remote' else 'local'
-      defaultOption = if @options.bounceToRemote then 'local' else 'remote'
-
-      bounceHost = @options[bounceOption + 'host']
-      bouncePort = @options[bounceOption + 'port']
-      defaultHost = @options[defaultOption + 'host']
-      defaultPort = @options[defaultOption + 'port']
+      # Bounce matching requests to this host:port
+      bounceHost = if @options.bounceToRemote then @options.remotehost else @options.localhost
+      bouncePort = if @options.bounceToRemote then @options.remoteport else @options.bounceport
+      # All other requests
+      defaultHost = if @options.bounceToRemote then @options.localhost else @options.remotehost
+      defaultPort = if @options.bounceToRemote then @options.bounceport else @options.remoteport
 
       @applyHeaders(res)
 
-      if mappingPath
-        @serveMapping()
+      if mappingTarget
+        res.end(@readMapping(mappingTarget))
       else if matchedBounce
-        console.log 'Bouncing to remote host: ', req.url, ' - Matched bounce rule: ', matchedBounce
+        console.log 'Bouncing request: ', req.url, ' - Matched bounce rule: ', matchedBounce
         bounce bounceHost, bouncePort
       else
-        console.log 'Bouncing to default option: ', req.url
+        console.log 'Forwarding request: ', req.url
         bounce defaultHost, defaultPort
 
     ).listen @options.localport, @options.hostname
