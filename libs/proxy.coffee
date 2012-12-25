@@ -6,7 +6,7 @@ httpProxy = require('http-proxy')
 class ProxyServer
   constructor: (@options) ->
 
-  # Utility function to read mock from file
+  # Utility function to read mapping, either directly as JSON or from a file
   readMapping: (mapping) =>
     try
       return JSON.parse(mapping)
@@ -31,7 +31,7 @@ class ProxyServer
     if @options.bounces is undefined or @options.bounces.length is 0
       return undefined
 
-    for bounce of @options.bounces
+    for bounce in @options.bounces
       return bounce if (new RegExp(bounce).test(url))
 
     return undefined
@@ -51,10 +51,12 @@ class ProxyServer
       defaultHost = if @options.bounceToRemote then @options.localhost else @options.remotehost
       defaultPort = if @options.bounceToRemote then @options.bounceport else @options.remoteport
 
+      # Add user headers and overwrite any present headers, if necessary.
       for key, value of @options.headers
         req.headers[key] = value
 
       if mappingTarget
+        console.log 'Mapping request: ', req.url, '- to file -', mappingTarget
         res.end(@readMapping(mappingTarget))
       else if matchedBounce
         console.log 'Bouncing request: ', bounceHost, bouncePort, req.url, ' - Matched bounce rule: ', matchedBounce
@@ -64,6 +66,5 @@ class ProxyServer
         proxy.proxyRequest(req, res, { host: defaultHost, port: defaultPort })
 
     ).listen(@options.localport, @options.localhost)
-
 
 module.exports = ProxyServer

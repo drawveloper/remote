@@ -26,7 +26,7 @@ class StaticServer
 
   start: =>
     # Start serving the files in the local bounce port
-    @staticServer.listen @options.localBouncePort
+    @staticServer.listen @options.bounceport
     return @staticServer
 
 module.exports = StaticServer

@@ -9,4 +9,4 @@ module.exports = ->
   new StaticServer(options).start()
   new ProxyServer(options).start()
 
-  console.log "Serving local files at " + options.localhost + ":" + options.localport
+  console.log "Remote -- serving local files at " + options.localhost + ":" + options.localport

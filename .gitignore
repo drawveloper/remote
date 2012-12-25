@@ -18,3 +18,4 @@ cover_html
 test.js
 .idea
 /js/
+/example/remote.dev.json

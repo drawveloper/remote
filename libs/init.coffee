@@ -66,5 +66,4 @@ class RemoteInitializer
       # Show the user the selected options
       console.log @options
 
-
 module.exports = RemoteInitializer
