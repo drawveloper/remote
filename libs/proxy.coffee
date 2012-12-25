@@ -1,59 +1,69 @@
 _u = require("underscore")
-bouncy = require("bouncy")
 fs = require('fs')
+path = require('path')
+httpProxy = require('http-proxy')
+
 class ProxyServer
   constructor: (@options) ->
 
   # Utility function to read mock from file
-  readMock: (filePath, callback) =>
+  readMapping: (mapping) =>
     try
-      fs.readFile(filePath, (err, data) ->
-        if err then callback(err) else callback(JSON.parse data)
-      )
+      return JSON.parse(mapping)
+    # Not a JSON string, treat as a path
     catch e
-      console.error "No file found!", e
-      callback(e)
+      try
+        pathMapping = path.resolve(process.cwd(), mapping)
+        return fs.readFileSync(pathMapping, 'utf8')
+      catch e2
+        console.error "Error reading mapping", mapping, e2
+
+  findMapping: (url) =>
+    if @options.mapping is false
+      return undefined
+
+    for key, value of @options.mappings
+      return value if (new RegExp(key).test(url))
+
+    return undefined
+
+  findBounce: (url) =>
+    if @options.bounces is undefined or @options.bounces.length is 0
+      return undefined
+
+    for bounce of @options.bounces
+      return bounce if (new RegExp(bounce).test(url))
+
+    return undefined
 
   start: =>
-    # Bounce requests
-    bouncy((req, bounce) =>
-      # Test if this request fits a mock (and *doesnt* fit its "unless" regex)
-      mock = _u.find( @options.mocks, (mock) ->
-        matchURL = (new RegExp(mock.url).test req.url)
-        matchUnless = if mock.unless then (new RegExp(mock.unless).test req.url) else false
-        return matchURL and not matchUnless
-      ) if @options.mocks
+    httpProxy.createServer( (req, res, proxy) =>
+      # Test if this request fits a mapping
+      mappingTarget = @findMapping(req.url)
 
-      # Test which bounce rules this request fits
-      bounces = _u.filter( @options.bounces,
-      (bounce) -> (new RegExp(bounce).test req.url ) ) if @options.bounces
+      # Test what bounce rule this request fits first
+      matchedBounce = @findBounce(req.url)
 
-      if @options.mock and mock
-        # Handler to end this response with a mock
-        endResponse = (data) ->
-          console.log 'Mocking url: ', req.url, 'Mock response: ', data
-          mockResponse = bounce.respond()
-          # Simply return the mock data
-          mockResponse.write(JSON.stringify data)
-          mockResponse.end()
+      # Bounce matching requests to this host:port
+      bounceHost = if @options.bounceToRemote then @options.remotehost else @options.localhost
+      bouncePort = if @options.bounceToRemote then @options.remoteport else @options.bounceport
+      # All other requests
+      defaultHost = if @options.bounceToRemote then @options.localhost else @options.remotehost
+      defaultPort = if @options.bounceToRemote then @options.bounceport else @options.remoteport
 
-        if mock.response
-          endResponse(mock.response)
-        else
-          @readMock(mock.file, endResponse)
+      for key, value of @options.headers
+        req.headers[key] = value
 
-      else if @options.bounces and bounces?.length > 0
-        console.log 'Bouncing to remote: ', req.url, ' - Matched bounce rules: ', bounces
-        req.on('error', (e) ->
-          console.error('Problem with the bounced request... ', e)
-          req.end()
-        )
-        bounce @options.host, @options.port
+      if mappingTarget
+        res.end(@readMapping(mappingTarget))
+      else if matchedBounce
+        console.log 'Bouncing request: ', bounceHost, bouncePort, req.url, ' - Matched bounce rule: ', matchedBounce
+        proxy.proxyRequest(req, res, { host: bounceHost, port: bouncePort })
       else
-        console.log 'Serving static file: ', req.url
-        bounce @options.localBouncePort
+        console.log 'Forwarding request: ', defaultHost, defaultPort, req.url
+        proxy.proxyRequest(req, res, { host: defaultHost, port: defaultPort })
 
-    ).listen @options.localport, @options.hostname
+    ).listen(@options.localport, @options.localhost)
 
 
 module.exports = ProxyServer
