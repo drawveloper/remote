@@ -40,17 +40,17 @@ class RemoteInitializer
 
     # If file is defined at this point, it has been read.
     if @options.file
-      fs.watchFile @options.file, { persistent: true, interval: 1000 }, (curr, prev) ->
+      fs.watchFile @options.file, { persistent: true, interval: 1000 }, (curr, prev) =>
         unless curr.size is prev.size and curr.mtime.getTime() is prev.mtime.getTime()
           console.log "Config file changed - updating options."
-          readOptions(@options.file)
+          @readOptions(@options.file)
 
     # Convert "mapping" attribute to boolean
     @options.mapping = if (not @options.mapping or @options.mapping is 'false') then false else true
 
 
   # Read configuration file and override any options with it
-  readOptions: (filePath) ->
+  readOptions: (filePath) =>
     @options.bounces = @options.mappings = undefined
     try
       fileConfig = JSON.parse(fs.readFileSync(filePath))

@@ -1,7 +1,7 @@
 _u = require("underscore")
-bouncy = require("bouncy")
 fs = require('fs')
 path = require('path')
+httpProxy = require('http-proxy')
 
 class ProxyServer
   constructor: (@options) ->
@@ -36,21 +36,8 @@ class ProxyServer
 
     return undefined
 
-  applyHeaders: (res) =>
-    for key, value of @options.headers?
-      res.setHeader(key, value)
-
-  # Handler to end this response with a mock
-  serveMapping: (res, data) ->
-
   start: =>
-    # Bounce requests
-    bouncy((req, res, bounce) =>
-      req.on('error', (e) ->
-        console.error('Problem with the bounced request... ', e)
-        req.end()
-      )
-
+    httpProxy.createServer( (req, res, proxy) =>
       # Test if this request fits a mapping
       mappingTarget = @findMapping(req.url)
 
@@ -64,18 +51,19 @@ class ProxyServer
       defaultHost = if @options.bounceToRemote then @options.localhost else @options.remotehost
       defaultPort = if @options.bounceToRemote then @options.bounceport else @options.remoteport
 
-      @applyHeaders(res)
+      for key, value of @options.headers
+        req.headers[key] = value
 
       if mappingTarget
         res.end(@readMapping(mappingTarget))
       else if matchedBounce
-        console.log 'Bouncing request: ', req.url, ' - Matched bounce rule: ', matchedBounce
-        bounce bounceHost, bouncePort
+        console.log 'Bouncing request: ', bounceHost, bouncePort, req.url, ' - Matched bounce rule: ', matchedBounce
+        proxy.proxyRequest(req, res, { host: bounceHost, port: bouncePort })
       else
-        console.log 'Forwarding request: ', req.url
-        bounce defaultHost, defaultPort
+        console.log 'Forwarding request: ', defaultHost, defaultPort, req.url
+        proxy.proxyRequest(req, res, { host: defaultHost, port: defaultPort })
 
-    ).listen @options.localport, @options.hostname
+    ).listen(@options.localport, @options.localhost)
 
 
 module.exports = ProxyServer
