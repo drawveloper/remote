@@ -11,4 +11,4 @@ new StaticServer(options).start()
 
 new ProxyServer(options).start()
 
-console.log "Serving local files at " + options.hostname + ":" + options.localport
+console.log "Serving local files at " + options.localhost + ":" + options.localport

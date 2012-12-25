@@ -37,6 +37,8 @@ class ProxyServer
     return undefined
 
   applyHeaders: (res) =>
+    for key, value of @options.headers?
+      res.setHeader(key, value)
 
   # Handler to end this response with a mock
   serveMapping: (res, data) ->
