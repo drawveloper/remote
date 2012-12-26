@@ -1,27 +1,23 @@
 {
     "directory": "../",
-    "remotehost": "walmartv5.vtexcommercebeta.com.br",
+    "remotehost" : "remote-api-host.com",
     "remoteport": 80,
     "localhost": "localhost",
     "localport": 3000,
+    "bounceport": 3001,
     "headers": {
-        "Host": "walmartv5.vtexcommercebeta.com.br",
-        "X-Track" : "mkp1"
+        "Host": "remote-api-host.com",
+        "X-Secret" : "awesome"
     },
-    "bounces":[
-        "/checkout/bootstrap/.*",
-        "/checkout/cart/.*",
-        "/checkout/css/.*",
-        "/checkout/img/.*",
-        "/checkout/js/.*",
-        "/checkout/locales/.*",
-        "/checkout/orderForm/.*",
-        "/checkout/orderPlaced/.*",
-        "/checkout/templates/.*"
+    "bounceToRemote": false,
+    "bounces" : [
+        "public/.*",
+        "assets/.*"
     ],
     "mapping": false,
     "mappings": {
-        ".*/api/checkout/pub/orderForm/.*":"./test/mocks/orderFormResponse-cep.json",
-        ".*/checkout/js/checkout-vm.js":"./src/js/orderform/checkout-vm.js"
+        ".*/api/users/1/remove": {"result": "ok"},
+        ".*/api/users/.*":"./test/mocks/users-mock.json",
+        ".*/public/js/awesome.js":"./src/special/path/awesome-2.js"
     }
 }

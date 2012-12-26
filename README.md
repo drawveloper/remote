@@ -91,6 +91,7 @@ A mapping is like a bounce rule, only more specific. You define what you want se
         }
     }
 
+
 As you can see, mappings can be:
 
 - A JSON object.
