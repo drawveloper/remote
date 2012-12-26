@@ -9,14 +9,15 @@ class ProxyServer
   # Utility function to read mapping, either directly as JSON or from a file
   readMapping: (mapping) =>
     try
-      return JSON.parse(mapping)
-    # Not a JSON string, treat as a path
-    catch e
-      try
+      # If it's a string, treat as a path.
+      if _u.isString(mapping)
         pathMapping = path.resolve(process.cwd(), mapping)
         return fs.readFileSync(pathMapping, 'utf8')
-      catch e2
-        console.error "Error reading mapping", mapping, e2
+      # Otherwise, treat it as an object and return JSON.
+      else
+        return JSON.stringify(mapping)
+    catch e
+      console.error "Error reading mapping", mapping, e
 
   findMapping: (url) =>
     if @options.mapping is false
@@ -40,6 +41,7 @@ class ProxyServer
     httpProxy.createServer( (req, res, proxy) =>
       # Test if this request fits a mapping
       mappingTarget = @findMapping(req.url)
+      console.log 'Mapping target', mappingTarget, req.url
 
       # Test what bounce rule this request fits first
       matchedBounce = @findBounce(req.url)
