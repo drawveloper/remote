@@ -76,8 +76,8 @@ A mapping is like a bounce rule, only more specific. You define what you want se
 		"directory" : "./src/",
 		"remotehost" : "remote-api-host.com",
         "headers": {
-            "Host": "walmartv5.vtexcommercebeta.com.br",
-            "X-Track" : "mkp1"
+            "Host": "remote-api-host.com",
+            "X-Secret-Header" : "awesome"
         },
 		"bounces" : [
 		    "public/.*",
