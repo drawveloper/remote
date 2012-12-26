@@ -41,7 +41,6 @@ class ProxyServer
     httpProxy.createServer( (req, res, proxy) =>
       # Test if this request fits a mapping
       mappingTarget = @findMapping(req.url)
-      console.log 'Mapping target', mappingTarget, req.url
 
       # Test what bounce rule this request fits first
       matchedBounce = @findBounce(req.url)

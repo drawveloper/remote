@@ -20,7 +20,7 @@ class RemoteInitializer
 
   initialize: =>
     # Commander options
-    program.version("0.1.0")
+    program.version("0.1.1")
       .option("-d, --directory [path]", "Path to local static files directory [./]")
       .option("-j, --remotehost [127.0.0.1]", "Host of the remote API [127.0.0.1]")
       .option("-p, --remoteport [80]", "Port of the remote API [80]")
