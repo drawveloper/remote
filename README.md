@@ -29,8 +29,11 @@ It aims to solve the dreaded **cross domain request** problem, so you can freely
     -m, --mapping [false]         Whether to use the mapping rules [false]
     -f, --file [remote.json]      Specific configuration file [remote.json]
 
+After installing, create a `remote.json` configuration file in your folder and simply call `remote`.
 
-### Basic usage - bounces
+Read on for the possible options for your `remote.json` file.
+
+### Bounces
 
 This is the simplest `remote.json`, with some bounce rules defined:
 
