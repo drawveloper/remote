@@ -2,11 +2,12 @@ StaticServer = require('./static.coffee')
 ProxyServer = require('./proxy.coffee')
 RemoteInitializer = require('./init.coffee')
 
-options = {}
+GLOBAL.remote = {}
+GLOBAL.remote.log = console.log
 
-module.exports = ->
+module.exports = (options = {}) ->
   new RemoteInitializer(options).initialize()
   new StaticServer(options).start()
   new ProxyServer(options).start()
 
-  console.log "Remote -- serving local files at " + options.localhost + ":" + options.localport
+  GLOBAL.remote.log "Remote -- serving local files at " + options.localhost + ":" + options.localport

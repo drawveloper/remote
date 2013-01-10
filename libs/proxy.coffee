@@ -57,13 +57,13 @@ class ProxyServer
         req.headers[key] = value
 
       if mappingTarget
-        console.log 'Mapping request: ', req.url, '- to file -', mappingTarget
+        GLOBAL.remote.log 'Mapping request: \n\t' + req.url + '\n\tto file\n\t' + mappingTarget
         res.end(@readMapping(mappingTarget))
       else if matchedBounce
-        console.log 'Bouncing request: ', bounceHost, bouncePort, req.url, ' - Matched bounce rule: ', matchedBounce
+        GLOBAL.remote.log 'Bouncing request: \n\t' + bounceHost + ':' + bouncePort + req.url + '\n\tMatched bounce rule: \n\t' + matchedBounce
         proxy.proxyRequest(req, res, { host: bounceHost, port: bouncePort })
       else
-        console.log 'Forwarding request: ', defaultHost, defaultPort, req.url
+        GLOBAL.remote.log 'Forwarding request: \n\t' + defaultHost + ':' + defaultPort + req.url
         proxy.proxyRequest(req, res, { host: defaultHost, port: defaultPort })
 
     ).listen(@options.localport, @options.localhost)

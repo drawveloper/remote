@@ -2,5 +2,5 @@
 (function() {
     require('coffee-script');
     // Call the main function
-    require('../libs/remote.coffee')();
+    require('../libs/remote.coffee')({cli:true});
 }).call(this);
