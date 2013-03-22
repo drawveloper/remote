@@ -2,9 +2,16 @@
 
 **Remote** is a simple CLI tool that enables you to work in local files while consuming an API from a remote server. An easy reverse proxy in Node, if you will.
 
-It starts a local server for your files, *bounces* some requests to this server, and *forwards* the rest to the remote host.
-You determine which requests are *bounced* by writing some regex in a small json configuration file.
-It also gives you the capability to serve arbitrary files at a given URL with **mappings**, and to set arbitrary request headers.
+If you'd like, it can also start a simple local server for your files.
+
+Simply specify
+
+- the address of your local files server, or where I should start one
+- the address of your remote API
+- the address of where to start a reverse proxy
+- a directory, if you want me to start a local server
+- some regex rules that define which files to serve locally, which to fetch from the remote host
+- optionally, you can map requests to specific files with the mappings option
 
 It aims to solve the dreaded **cross domain request** problem, so you can freely *ajax* like you have a local server-side.
 
@@ -12,24 +19,28 @@ It aims to solve the dreaded **cross domain request** problem, so you can freely
 
 	npm install -g remote
 
-### Usage
+### Quickstart
 
-	remote [options]
+After installing, create a `remote.json` configuration file (check the example folder) and simply call `remote`.
 
-    Options:
+### Usage - command line
 
-    -h, --help                    output usage information
-    -V, --version                 output the version number
-    -d, --directory [path]        Path to local static files directory [./]
-    -j, --remotehost [127.0.0.1]  Host of the remote API [127.0.0.1]
-    -p, --remoteport [80]         Port of the remote API [80]
-    -l, --localhost [localhost]   Hostname to serve the files in [localhost]
-    -q, --localport [3000]        Port of the local proxy server [3000]
-    -b, --bounceport [3001]       Port of the local file server [3001]
-    -m, --mapping [false]         Whether to use the mapping rules [false]
-    -f, --file [remote.json]      Specific configuration file [remote.json]
+  remote [options]
 
-After installing, create a `remote.json` configuration file in your folder and simply call `remote`.
+		Options:
+
+			-h, --help                output usage information
+			-V, --version             output the version number
+			-d, --directory [path]    Path to a local folder. If defined, will serve files at server address. [undefined]
+			-r, --remote [host:port]  Address of the remote API [localhost:80]
+			-p, --proxy [host:port]   Address of the reverse proxy server [localhost:9001]
+			-s, --server [host:port]  Address of the static file server [localhost:9000]
+			-m, --mapping             Whether to use the mapping rules [false]
+			-f, --file [remote.json]  Specific configuration file [remote.json]
+
+### Usage - configuration file (remote.json)
+
+See the example configuration file at the example folder.
 
 Read on for the possible options for your `remote.json` file.
 
@@ -39,7 +50,7 @@ This is the simplest `remote.json`, with some bounce rules defined:
 
 	{
 		"directory" : "./src/",
-		"remotehost" : "remote-api-host.com",
+		"remote" : {"host": "remote-api-host.com", "port": 80},
 		"bounces" : [
 		    "public/.*",
 		    "assets/.*"
@@ -54,16 +65,16 @@ Other URL's will be forwarded to `remote-api-host.com`
 You may wish to send along some headers with your request. For example:
 
     {
-		"directory" : "./src/",
-		"remotehost" : "remote-api-host.com",
-        "headers": {
-            "Host": "remote-api-host.com",
-            "X-Secret-Header" : "awesome"
-        },
-		"bounces" : [
-		    "public/.*",
-		    "assets/.*"
-		]
+			"directory" : "./src/",
+			"remote" : {"host": "remote-api-host.com", "port": 80},
+			"headers": {
+					"Host": "remote-api-host.com",
+					"X-Secret-Header" : "awesome"
+				},
+			"bounces" : [
+					"public/.*",
+					"assets/.*"
+				]
     }
 
 These will be added to every request made by `remote`.
@@ -74,11 +85,11 @@ A mapping is like a bounce rule, only more specific. You define what you want se
 
     {
 		"directory" : "./src/",
-		"remotehost" : "remote-api-host.com",
-        "headers": {
-            "Host": "remote-api-host.com",
-            "X-Secret-Header" : "awesome"
-        },
+		"remote" : {"host": "remote-api-host.com", "port": 80},
+		"headers": {
+				"Host": "remote-api-host.com",
+				"X-Secret-Header" : "awesome"
+		},
 		"bounces" : [
 		    "public/.*",
 		    "assets/.*"
@@ -129,6 +140,13 @@ Or any such large value, before turning on remote.
 -----------------
 
 ### Changelog:
+v 0.2.0:
+
+- **Breaking changes** in API. Old remote.json files wont work.
+- Better options syntax
+- Bring you own local server. Now you can use remote as a reverse proxy, only.
+- Many fixes.
+
 v 0.1.0:
 
 - Major rewrite. Nothing of note before this ;)

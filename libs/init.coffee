@@ -3,72 +3,60 @@ fs = require('fs')
 _u = require("underscore")
 path = require('path')
 
-class RemoteInitializer
+class Initializer
+  constructor: ->
+
   # Default configuration options
-  defaults:
-    directory: './'
-    remotehost: '127.0.0.1'
-    remoteport: 80
-    localhost: 'localhost'
-    localport: 3000
-    bounceport: 3001
+  @defaults:
+    remote:
+      host: '127.0.0.1'
+      port: 80
+    proxy:
+      host: 'localhost'
+      port: 9001
+    server:
+      host: 'localhost'
+      port: 9000
+    directory: undefined
     bounceToRemote: false
     file: './remote.json'
     mapping: false
 
-  constructor: (@options) ->
+  # Overrides argument options with CLI options
+  @parseOptionsFromCLI: () ->
+    hostAndPortFromAddress = (address = ':') ->
+      if address.split(':')[0] is '' then return undefined else host: address.split(':')[0], port: parseInt(address.split(':')[1], 10)
 
-  initialize: =>
-    _u.extend @options, @defaults
+    # Commander options
+    program.version("0.2.0")
+      .option("-d, --directory [path]", "Path to a local folder. If defined, will serve files at server address. [undefined]")
+      .option("-r, --remote [host:port]", "Address of the remote API [localhost:80]", hostAndPortFromAddress)
+      .option("-p, --proxy [host:port]", "Address of the reverse proxy server [localhost:9001]", hostAndPortFromAddress)
+      .option("-s, --server [host:port]", "Address of the static file server [localhost:9000]", hostAndPortFromAddress)
+      .option("-m, --mapping", "Whether to use the mapping rules [false]")
+      .option("-f, --file [remote.json]", "Specific configuration file [remote.json]")
+      .parse process.argv
 
-    # If we are being started from command line
-    if @options.cli
-      # Commander options
-      program.version("0.1.1")
-        .option("-d, --directory [path]", "Path to local static files directory [./]")
-        .option("-j, --remotehost [127.0.0.1]", "Host of the remote API [127.0.0.1]")
-        .option("-p, --remoteport [80]", "Port of the remote API [80]")
-        .option("-l, --localhost [localhost]", "Hostname to serve the files in [localhost]")
-        .option("-q, --localport [3000]", "Port of the local proxy server [3000]")
-        .option("-b, --bounceport [3001]", "Port of the local file server [3001]")
-        .option("-m, --mapping [false]", "Whether to use the mapping rules [false]")
-        .option("-f, --file [remote.json]", "Specific configuration file [remote.json]")
-        .parse process.argv
+    return Initializer.normalize(_u.pick(program,['remote', 'proxy', 'server', 'directory', 'mapping', 'file']))
 
-      # Initialize options with file name
-      _u.extend @options, _u.pick(program, 'file')
-
+  # Read options from filePath and overrides argument options with them
+  @parseOptionsFromFile: (filePath) =>
     # Resolve relative path
-    @options.file = path.resolve(process.cwd(), @options.file)
-
-    @readOptions(@options.file)
-
-    # If file is defined at this point, it has been read.
-    if @options.file
-      fs.watchFile @options.file, { persistent: true, interval: 1000 }, (curr, prev) =>
-        unless curr.size is prev.size and curr.mtime.getTime() is prev.mtime.getTime()
-          GLOBAL.remote.log "Config file changed - updating options."
-          @readOptions(@options.file)
-
-    # Convert "mapping" attribute to boolean
-    @options.mapping = if (not @options.mapping or @options.mapping is 'false') then false else true
-
-
-  # Read configuration file and override any options with it
-  readOptions: (filePath) =>
-    @options.bounces = @options.mappings = undefined
+    filePath = path.resolve(process.cwd(), filePath)
     try
       fileConfig = JSON.parse(fs.readFileSync(filePath))
-      _u.extend(@options, fileConfig) if fileConfig
+      return Initializer.normalize(fileConfig)
     catch e
       console.error "No configuration file found!", e
-      @options.file = undefined
-    finally
-      # Override any file options with command line options
-      _u.extend(@options, _u.pick(program, 'directory', 'remotehost', 'remoteport', 'localhost', 'localport', 'bounceport', 'mapping'))
-      # Resolve relative path
-      @options.directory = path.resolve(process.cwd(), @options.directory)
-      # Show the user the selected options
-      GLOBAL.remote.log @options
+      return {}
 
-module.exports = RemoteInitializer
+  @normalize: (options) ->
+    # Convert "mapping" attribute to boolean
+    options.mapping = if (not options.mapping or options.mapping is 'false') then false else true
+    # Resolve relative path
+    options.directory = path.resolve(process.cwd(), options.directory) if options.directory
+    # Remove keys with undefined properties
+    _u(options).chain().keys().each((k) -> delete options[k] if options[k] is undefined)
+    return options
+
+module.exports = Initializer

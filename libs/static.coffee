@@ -25,8 +25,10 @@ class StaticServer
     )
 
   start: =>
+    return unless @options.directory
     # Start serving the files in the local bounce port
-    @staticServer.listen @options.bounceport
+    @staticServer.listen @options.server.port, @options.server.host
+    console.log "Remote -- serving folder", @options.directory, "at " + @options.server.host + ":" + @options.server.port
     return @staticServer
 
 module.exports = StaticServer

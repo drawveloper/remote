@@ -1,10 +1,17 @@
 {
-    "directory": "../",
-    "remotehost" : "remote-api-host.com",
-    "remoteport": 80,
-    "localhost": "localhost",
-    "localport": 3000,
-    "bounceport": 3001,
+    "directory": "./",
+    "remote": {
+        "host": "remote-api-host.com",
+        "port": 80
+    },
+    "proxy": {
+        "host": "localhost",
+        "port": 9001
+    },
+    "server": {
+        "host": "localhost",
+        "port": 9000
+    },
     "headers": {
         "Host": "remote-api-host.com",
         "X-Secret" : "awesome"

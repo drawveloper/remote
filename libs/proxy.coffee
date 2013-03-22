@@ -46,26 +46,25 @@ class ProxyServer
       matchedBounce = @findBounce(req.url)
 
       # Bounce matching requests to this host:port
-      bounceHost = if @options.bounceToRemote then @options.remotehost else @options.localhost
-      bouncePort = if @options.bounceToRemote then @options.remoteport else @options.bounceport
+      bounceAddress = if @options.bounceToRemote then @options.remote else @options.server
       # All other requests
-      defaultHost = if @options.bounceToRemote then @options.localhost else @options.remotehost
-      defaultPort = if @options.bounceToRemote then @options.bounceport else @options.remoteport
+      defaultAddress = if @options.bounceToRemote then @options.server else @options.remote
 
       # Add user headers and overwrite any present headers, if necessary.
       for key, value of @options.headers
         req.headers[key] = value
 
       if mappingTarget
-        GLOBAL.remote.log 'Mapping request: \n\t' + req.url + '\n\tto file\n\t' + mappingTarget
+        console.log 'Mapping request: \n\t' + req.url + '\n\tto file\n\t' + mappingTarget
         res.end(@readMapping(mappingTarget))
       else if matchedBounce
-        GLOBAL.remote.log 'Bouncing request: \n\t' + bounceHost + ':' + bouncePort + req.url + '\n\tMatched bounce rule: \n\t' + matchedBounce
-        proxy.proxyRequest(req, res, { host: bounceHost, port: bouncePort })
+        console.log 'Bouncing request: \n\t' + bounceAddress.host + ':' + bounceAddress.port + req.url + '\n\tMatched bounce rule: \n\t' + matchedBounce
+        proxy.proxyRequest(req, res, { host: bounceAddress.host, port: bounceAddress.port })
       else
-        GLOBAL.remote.log 'Forwarding request: \n\t' + defaultHost + ':' + defaultPort + req.url
-        proxy.proxyRequest(req, res, { host: defaultHost, port: defaultPort })
+        console.log 'Forwarding request: \n\t' + defaultAddress.host + ':' + defaultAddress.port + req.url
+        proxy.proxyRequest(req, res, { host: defaultAddress.host, port: defaultAddress.port })
 
-    ).listen(@options.localport, @options.localhost)
+    ).listen(@options.proxy.port, @options.proxy.host)
+    console.log "Remote -- reverse proxy at", @options.proxy.host + ":" + @options.proxy.port
 
 module.exports = ProxyServer
