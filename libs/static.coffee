@@ -5,6 +5,7 @@ url = require("url")
 class StaticServer
   staticServer: null
   constructor: (@options) ->
+    return unless @options.directory
     # Serve static files
     @staticServer = http.createServer( (req, res) =>
       error = (err) ->
@@ -23,12 +24,8 @@ class StaticServer
         .on('directory', redirect)
         .pipe(res)
     )
-
-  start: =>
-    return unless @options.directory
     # Start serving the files in the local bounce port
     @staticServer.listen @options.server.port, @options.server.host
     console.log "Remote -- serving folder", @options.directory, "at " + @options.server.host + ":" + @options.server.port
-    return @staticServer
 
 module.exports = StaticServer

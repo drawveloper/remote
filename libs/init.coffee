@@ -28,12 +28,12 @@ class Initializer
       if address.split(':')[0] is '' then return undefined else host: address.split(':')[0], port: parseInt(address.split(':')[1], 10)
 
     # Commander options
-    program.version("0.2.0")
+    program.version("0.2.1")
       .option("-d, --directory [path]", "Path to a local folder. If defined, will serve files at server address. [undefined]")
       .option("-r, --remote [host:port]", "Address of the remote API [localhost:80]", hostAndPortFromAddress)
       .option("-p, --proxy [host:port]", "Address of the reverse proxy server [localhost:9001]", hostAndPortFromAddress)
       .option("-s, --server [host:port]", "Address of the static file server [localhost:9000]", hostAndPortFromAddress)
-      .option("-m, --mapping", "Whether to use the mapping rules [false]")
+      .option("-m, --mapping", "Whether to use the mapping rules")
       .option("-f, --file [remote.json]", "Specific configuration file [remote.json]")
       .parse process.argv
 
@@ -51,8 +51,6 @@ class Initializer
       return {}
 
   @normalize: (options) ->
-    # Convert "mapping" attribute to boolean
-    options.mapping = if (not options.mapping or options.mapping is 'false') then false else true
     # Resolve relative path
     options.directory = path.resolve(process.cwd(), options.directory) if options.directory
     # Remove keys with undefined properties

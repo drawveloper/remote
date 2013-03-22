@@ -140,6 +140,11 @@ Or any such large value, before turning on remote.
 -----------------
 
 ### Changelog:
+v 0.2.1:
+
+- File update and options scope fix.
+- Mappings should work now when applied in a file.
+
 v 0.2.0:
 
 - **Breaking changes** in API. Old remote.json files wont work.
