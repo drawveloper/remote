@@ -1,7 +1,7 @@
 {
   "name": "remote",
   "description": "Work on client-side files with a remote API server transparently",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "repository": {
     "type": "git",
     "url": "git://github.com/gadr90/remote.git"
@@ -25,7 +25,7 @@
     "commander": "1.1.1",
     "underscore": "1.4.x",
     "coffee-script": "1.4.x",
-    "http-proxy": "0.8.7"
+    "http-proxy": "0.10.0"
   },
   "engines": {
     "node": ">=0.8.0"

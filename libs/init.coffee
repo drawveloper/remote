@@ -28,7 +28,7 @@ class Initializer
       if address.split(':')[0] is '' then return undefined else host: address.split(':')[0], port: parseInt(address.split(':')[1], 10)
 
     # Commander options
-    program.version("0.2.1")
+    program.version("0.2.2")
       .option("-d, --directory [path]", "Path to a local folder. If defined, will serve files at server address. [undefined]")
       .option("-r, --remote [host:port]", "Address of the remote API [localhost:80]", hostAndPortFromAddress)
       .option("-p, --proxy [host:port]", "Address of the reverse proxy server [localhost:9001]", hostAndPortFromAddress)
