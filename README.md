@@ -98,6 +98,7 @@ A mapping is like a bounce rule, only more specific. You define what you want se
         "mappings": {
             ".*/api/users/1/remove": {"result": "ok"},
             ".*/api/users/.*":"./test/mocks/users-mock.json",
+            ".*/files/.*":"./test/files/",
             ".*/public/js/awesome.js":"./src/special/path/awesome-2.js"
         }
     }
@@ -107,6 +108,7 @@ As you can see, mappings can be:
 
 - A JSON object.
 - A path to any file.
+- A path to any directory (Remote will locate the requested file in the directory).
 
 When any of these URL's are requested, remote will serve the given resource.
 
@@ -140,6 +142,10 @@ Or any such large value, before turning on remote.
 -----------------
 
 ### Changelog:
+v 0.2.3:
+
+- Accepts directory for mappings.
+
 v 0.2.1:
 
 - File update and options scope fix.
