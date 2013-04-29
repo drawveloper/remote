@@ -142,6 +142,10 @@ Or any such large value, before turning on remote.
 -----------------
 
 ### Changelog:
+v 0.2.4:
+
+- Serves images correctly (utf8 issue fix, thanks Augusto).
+
 v 0.2.3:
 
 - Accepts directory for mappings.

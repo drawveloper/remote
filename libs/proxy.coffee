@@ -43,20 +43,15 @@ class ProxyServer
 				pathMapping = path.resolve(process.cwd(), mapping)
 				isDirectory = fs.statSync(pathMapping).isDirectory()
 				imgExtensions = ['.gif', '.png', '.jpg', '.jpeg']
+				encoding = if path.extname(pathMapping) in imgExtensions then undefined else 'utf8'
 				if (isDirectory)
 					fileName = path.basename(url)
 					fullPath = path.resolve(pathMapping, fileName)
 					console.log '\tto file in directory\n\t' + fullPath
-					if path.extname(fileName) in imgExtensions
-						return fs.readFileSync(fullPath)
-					else
-						return fs.readFileSync(fullPath, 'utf8')
+					return fs.readFileSync(fullPath, encoding)
 				else
 					console.log '\tto file\n\t' + pathMapping
-					if path.extname(pathMapping) in imgExtensions
-						return fs.readFileSync(pathMapping)
-					else
-						return fs.readFileSync(pathMapping, 'utf8')
+					return fs.readFileSync(pathMapping, encoding)
 				# Otherwise, treat it as an object and return JSON.
 			else
 				return JSON.stringify(mapping)

@@ -1,7 +1,7 @@
 {
   "name": "remote",
   "description": "Work on client-side files with a remote API server transparently",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "repository": {
     "type": "git",
     "url": "git://github.com/gadr90/remote.git"
@@ -32,7 +32,8 @@
   },
   "license": "BSD",
   "contributors": [
-    "Breno Calazans <breno@vtex.com.br> (http://www.vtex.com.br)"
+    "Breno Calazans <breno@vtex.com.br> (http://www.vtex.com.br)",
+		"Augusto Barbosa <augusto@vtex.com.br> (http://www.vtex.com.br)"
   ],
   "readmeFilename": "README.md",
   "scripts": {
