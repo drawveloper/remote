@@ -1,7 +1,7 @@
 {
     "directory": "./",
     "remote": {
-        "host": "remote-api-host.com",
+        "host": "google.com",
         "port": 80
     },
     "proxy": {
@@ -21,10 +21,12 @@
         "public/.*",
         "assets/.*"
     ],
-    "mapping": false,
+    "mapping": true,
     "mappings": {
         ".*/api/users/1/remove": {"result": "ok"},
         ".*/api/users/.*":"./test/mocks/users-mock.json",
-        ".*/public/js/awesome.js":"./src/special/path/awesome-2.js"
+        ".*/public/js/awesome.js":"./remote.json",
+        ".*/img/.*":"./",
+        ".*/api/pvt/.*":"http://google.com"
     }
 }

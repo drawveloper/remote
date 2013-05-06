@@ -23,8 +23,13 @@ class ProxyServer
 
 			if mappingTarget
 				console.log 'Mapping request: \n\t' + req.url
-				mappingResult = @readMapping(mappingTarget, req.url)
-				res.end(mappingResult)
+				if @isAddress mappingTarget
+					cleanHost = mappingTarget.replace(/^http\:\/\/|^https\:\/\//g, '')
+					console.log '\tto host\n\t' + cleanHost
+					proxy.proxyRequest(req, res, { host: cleanHost, port: defaultAddress.port })
+				else
+					mappingResult = @readMapping(mappingTarget, req.url)
+					res.end(mappingResult)
 			else if matchedBounce
 				console.log 'Bouncing request: \n\t' + bounceAddress.host + ':' + bounceAddress.port + req.url + '\n\tMatched bounce rule: \n\t' + matchedBounce
 				proxy.proxyRequest(req, res, { host: bounceAddress.host, port: bounceAddress.port })
@@ -41,16 +46,16 @@ class ProxyServer
 		# If it's a string, treat as a path or file.
 			if _u.isString(mapping)
 				pathMapping = path.resolve(process.cwd(), mapping)
+				fileName = path.basename(url)
 				isDirectory = fs.statSync(pathMapping).isDirectory()
-				imgExtensions = ['.gif', '.png', '.jpg', '.jpeg']
-				encoding = if path.extname(pathMapping) in imgExtensions then undefined else 'utf8'
+				encoding = 'utf8'
+				encoding = undefined if path.extname(fileName) in ['.gif', '.png', '.jpg', '.jpeg']
 				if (isDirectory)
-					fileName = path.basename(url)
 					fullPath = path.resolve(pathMapping, fileName)
-					console.log '\tto file in directory\n\t' + fullPath
+					console.log '\tto file in directory\n\t' + fullPath, 'encoding',  encoding
 					return fs.readFileSync(fullPath, encoding)
 				else
-					console.log '\tto file\n\t' + pathMapping
+					console.log '\tto file\n\t' + pathMapping, 'encoding', encoding
 					return fs.readFileSync(pathMapping, encoding)
 				# Otherwise, treat it as an object and return JSON.
 			else
@@ -75,5 +80,7 @@ class ProxyServer
 			return bounce if (new RegExp(bounce).test(url))
 
 		return undefined
+
+	isAddress: (mappingTarget) -> /^http\:\/\/.*|^https\:\/\/.*/.test mappingTarget
 
 module.exports = ProxyServer

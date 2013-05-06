@@ -142,6 +142,11 @@ Or any such large value, before turning on remote.
 -----------------
 
 ### Changelog:
+v 0.2.5:
+
+- Serves images correctly. Really, this time.
+- Accepts mapping with 'http://' to change to arbitrary host.
+
 v 0.2.4:
 
 - Serves images correctly (utf8 issue fix, thanks Augusto).
