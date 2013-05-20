@@ -23,8 +23,13 @@ class ProxyServer
 
 			if mappingTarget
 				console.log 'Mapping request: \n\t' + req.url
-				mappingResult = @readMapping(mappingTarget, req.url)
-				res.end(mappingResult)
+				if @isAddress mappingTarget
+					cleanHost = mappingTarget.replace(/^http\:\/\/|^https\:\/\//g, '')
+					console.log '\tto host\n\t' + cleanHost
+					proxy.proxyRequest(req, res, { host: cleanHost, port: defaultAddress.port })
+				else
+					mappingResult = @readMapping(mappingTarget, req.url)
+					res.end(mappingResult)
 			else if matchedBounce
 				console.log 'Bouncing request: \n\t' + bounceAddress.host + ':' + bounceAddress.port + req.url + '\n\tMatched bounce rule: \n\t' + matchedBounce
 				proxy.proxyRequest(req, res, { host: bounceAddress.host, port: bounceAddress.port })
@@ -41,22 +46,22 @@ class ProxyServer
 		# If it's a string, treat as a path or file.
 			if _u.isString(mapping)
 				pathMapping = path.resolve(process.cwd(), mapping)
+				fileName = path.basename(url)
 				isDirectory = fs.statSync(pathMapping).isDirectory()
-				imgExtensions = ['.gif', '.png', '.jpg', '.jpeg']
+				finalExtName = path.extname(fileName).indexOf('?')
+				finalExtName = path.extname(fileName).length if finalExtName == -1
+				extName = path.extname(fileName).substr(0, finalExtName)
+				encoding = 'utf8'
+				encoding = undefined if extName in ['.gif', '.png', '.jpg', '.jpeg']
+				baseNamePosition = fileName.lastIndexOf('.')
+				fileName = fileName.substr(0, baseNamePosition) + extName
 				if (isDirectory)
-					fileName = path.basename(url)
 					fullPath = path.resolve(pathMapping, fileName)
-					console.log '\tto file in directory\n\t' + fullPath
-					if path.extname(fileName) in imgExtensions
-						return fs.readFileSync(fullPath)
-					else
-						return fs.readFileSync(fullPath, 'utf8')
+					console.log '\tto file in directory\n\t' + fullPath, 'encoding',  encoding
+					return fs.readFileSync(fullPath, encoding)
 				else
-					console.log '\tto file\n\t' + pathMapping
-					if path.extname(pathMapping) in imgExtensions
-						return fs.readFileSync(pathMapping)
-					else
-						return fs.readFileSync(pathMapping, 'utf8')
+					console.log '\tto file\n\t' + pathMapping, 'encoding', encoding
+					return fs.readFileSync(pathMapping, encoding)
 				# Otherwise, treat it as an object and return JSON.
 			else
 				return JSON.stringify(mapping)
@@ -80,5 +85,7 @@ class ProxyServer
 			return bounce if (new RegExp(bounce).test(url))
 
 		return undefined
+
+	isAddress: (mappingTarget) -> /^http\:\/\/.*|^https\:\/\/.*/.test mappingTarget
 
 module.exports = ProxyServer
