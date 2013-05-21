@@ -48,8 +48,13 @@ class ProxyServer
 				pathMapping = path.resolve(process.cwd(), mapping)
 				fileName = path.basename(url)
 				isDirectory = fs.statSync(pathMapping).isDirectory()
+				finalExtName = path.extname(fileName).indexOf('?')
+				finalExtName = path.extname(fileName).length if finalExtName == -1
+				extName = path.extname(fileName).substr(0, finalExtName)
 				encoding = 'utf8'
-				encoding = undefined if path.extname(fileName) in ['.gif', '.png', '.jpg', '.jpeg']
+				encoding = undefined if extName in ['.gif', '.png', '.jpg', '.jpeg']
+				baseNamePosition = fileName.lastIndexOf('.')
+				fileName = fileName.substr(0, baseNamePosition) + extName
 				if (isDirectory)
 					fullPath = path.resolve(pathMapping, fileName)
 					console.log '\tto file in directory\n\t' + fullPath, 'encoding',  encoding
