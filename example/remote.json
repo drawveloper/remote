@@ -24,8 +24,8 @@
     "mapping": true,
     "mappings": {
         ".*/api/users/1/remove": {"result": "ok"},
-        ".*/api/users/.*":"./test/mocks/users-mock.json",
-        ".*/public/js/awesome.js":"./remote.json",
+        ".*/api/users/.*":"example/remote.json",
+        ".*/public/js/awesome.js":"example/remote.json",
         ".*/img/.*":"example/",
         ".*/api/pvt/.*":"http://google.com"
     }

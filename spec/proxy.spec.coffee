@@ -13,21 +13,18 @@ describe 'Remote proxy server', ->
 		mappingTarget = remote.proxy.findMapping("/api/users/1/remove")
 		expect(mappingTarget).toEqual({"result": "ok"})
 
-		mappingResult = remote.proxy.readMapping(mappingTarget, "/api/users/1/remove")
-		expect(mappingResult).toBe(JSON.stringify({"result": "ok"}))
-
 	it 'should read a path mapping', ->
 		mappingTarget = remote.proxy.findMapping("/img/nodejs.png")
 		expect(mappingTarget).toEqual("example/")
 
-		mappingResult = remote.proxy.readMapping(mappingTarget, "/img/nodejs.png")
+		mappingResult = remote.proxy.readStringMapping(mappingTarget, "/img/nodejs.png")
 		expect(mappingResult).toBeDefined()
 
 	it 'should read a path mapping, discarding query string', ->
 		mappingTarget = remote.proxy.findMapping("/img/nodejs.png?v=10")
 		expect(mappingTarget).toEqual("example/")
 
-		mappingResult = remote.proxy.readMapping(mappingTarget, "/img/nodejs.png?v=10")
+		mappingResult = remote.proxy.readStringMapping(mappingTarget, "/img/nodejs.png?v=10")
 		expect(mappingResult).toBeDefined()
 
 	it 'should read a binary file mapping', ->

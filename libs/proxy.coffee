@@ -14,57 +14,60 @@ class ProxyServer
 
 			# Bounce matching requests to this host:port
 			bounceAddress = if @options.bounceToRemote then @options.remote else @options.server
+
 			# All other requests
 			defaultAddress = if @options.bounceToRemote then @options.server else @options.remote
 
 			# Add user headers and overwrite any present headers, if necessary.
-			for key, value of @options.headers
-				req.headers[key] = value
+			req.headers[key] = value for key, value of @options.headers
 
 			if mappingTarget
-				console.log 'Request: \n\t' + req.url
-				if @isAddress mappingTarget
-					cleanHost = mappingTarget.replace(/^http\:\/\/|^https\:\/\//g, '')
-					console.log '\tto host\n\t' + cleanHost
-					proxy.proxyRequest(req, res, { host: cleanHost, port: defaultAddress.port })
-				else
-					mappingResult = @readMapping(mappingTarget, req.url)
-					res.end(mappingResult)
+				@map(req, res, proxy, mappingTarget)
 			else if matchedBounce
-				console.log 'Bouncing request: \n\t' + bounceAddress.host + ':' + bounceAddress.port + req.url + '\n\tMatched bounce rule: \n\t' + matchedBounce
-				proxy.proxyRequest(req, res, { host: bounceAddress.host, port: bounceAddress.port })
+				@bounce(req, res, proxy, bounceAddress, matchedBounce)
 			else
-				console.log 'Forwarding request: \n\t' + defaultAddress.host + ':' + defaultAddress.port + req.url
-				proxy.proxyRequest(req, res, { host: defaultAddress.host, port: defaultAddress.port })
+				@forward(req, res, proxy, defaultAddress)
 		)
 		@server.listen(@options.proxy.port, @options.proxy.host)
 		console.log "Remote -- reverse proxy at", @options.proxy.host + ":" + @options.proxy.port
 
-	# Utility function to read mapping, either directly as JSON or from a file
-	readMapping: (mapping, url) =>
-		try
+	map: (req, res, proxy, mappingTarget) =>
+		if @isAddress mappingTarget
+			cleanHost = mappingTarget.replace(/^http\:\/\/|^https\:\/\//g, '')
+			console.log '\tto host\n\t' + cleanHost
+			proxy.proxyRequest(req, res, { host: cleanHost, port: @options.remote.port })
 		# If it's a string, treat as a path or file.
-			if _u.isString(mapping)
-				pathMapping = path.resolve(process.cwd(), mapping)
-				fileName = path.basename(url)
-				isDirectory = fs.statSync(pathMapping).isDirectory()
-				finalExtName = path.extname(fileName).indexOf('?')
-				finalExtName = path.extname(fileName).length if finalExtName == -1
-				extName = path.extname(fileName).substr(0, finalExtName)
-				encoding = 'utf8'
-				encoding = undefined if extName in ['.gif', '.png', '.jpg', '.jpeg']
-				baseNamePosition = fileName.lastIndexOf('.')
-				fileName = fileName.substr(0, baseNamePosition) + extName
-				if isDirectory
-					fullPath = path.resolve(pathMapping, fileName)
-					console.log '\tmapped to file in directory\n\t' + fullPath, 'encoding',  encoding
-					return fs.readFileSync(fullPath, encoding)
-				else
-					console.log '\tmapped to file\n\t' + pathMapping, 'encoding', encoding
-					return fs.readFileSync(pathMapping, encoding)
-				# Otherwise, treat it as an object and return JSON.
+		else if _u.isString(mappingTarget)
+			res.end(@readStringMapping(mappingTarget, req.url))
+		# Otherwise, treat it as an object and return JSON.
+		else
+			res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' })
+			res.end(JSON.stringify(mappingTarget))
+
+	bounce: (req, res, proxy, address, matchedBounce) =>
+		console.log 'Bouncing request: \n\t' + address.host + ':' + address.port + req.url + '\n\tMatched bounce rule: \n\t' + matchedBounce
+		proxy.proxyRequest(req, res, { host: address.host, port: address.port })
+
+	forward: (req, res, proxy, address) =>
+		console.log 'Forwarding request: \n\t' + address.host + ':' + address.port + req.url
+		proxy.proxyRequest(req, res, { host: address.host, port: address.port })
+
+	# Utility function to read mapping, either directly as JSON or from a file
+	readStringMapping: (mapping, url) =>
+		console.log 'Request: \n\t' + url
+		try
+			pathMapping = path.resolve(process.cwd(), mapping)
+			isDirectory = fs.statSync(pathMapping).isDirectory()
+			fileName = path.basename(url).replace(/\?.*/, '')
+			fileExtension = path.extname(fileName)
+			encoding = @getEncoding(fileExtension)
+			if isDirectory
+				fullPath = path.resolve(pathMapping, fileName)
+				console.log '\tmapped to file in directory\n\t' + fullPath, 'encoding',  encoding
+				return fs.readFileSync(fullPath, encoding)
 			else
-				return JSON.stringify(mapping)
+				console.log '\tmapped to file\n\t' + pathMapping, 'encoding', encoding
+				return fs.readFileSync(pathMapping, encoding)
 		catch e
 			console.error "Error reading mapping", mapping, e
 
@@ -87,5 +90,11 @@ class ProxyServer
 		return undefined
 
 	isAddress: (mappingTarget) -> /^http\:\/\/.*|^https\:\/\/.*/.test mappingTarget
+
+	getEncoding: (extension) ->
+		if extension in ['.gif', '.png', '.jpg', '.jpeg']
+			return undefined
+		else
+			return 'utf-8'
 
 module.exports = ProxyServer

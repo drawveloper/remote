@@ -142,6 +142,11 @@ Or any such large value, before turning on remote.
 -----------------
 
 ### Changelog:
+v 0.2.6:
+
+- Ignores query string on mapping.
+- Starting unit tests with jasmine-node.
+
 v 0.2.5:
 
 - Serves images correctly. Really, this time.
