@@ -1,5 +1,5 @@
 {
-    "directory": "./",
+    "directory": "./example",
     "remote": {
         "host": "google.com",
         "port": 80
@@ -26,7 +26,7 @@
         ".*/api/users/1/remove": {"result": "ok"},
         ".*/api/users/.*":"./test/mocks/users-mock.json",
         ".*/public/js/awesome.js":"./remote.json",
-        ".*/img/.*":"./",
+        ".*/img/.*":"example/",
         ".*/api/pvt/.*":"http://google.com"
     }
 }

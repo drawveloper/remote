@@ -22,7 +22,7 @@ class ProxyServer
 				req.headers[key] = value
 
 			if mappingTarget
-				console.log 'Mapping request: \n\t' + req.url
+				console.log 'Request: \n\t' + req.url
 				if @isAddress mappingTarget
 					cleanHost = mappingTarget.replace(/^http\:\/\/|^https\:\/\//g, '')
 					console.log '\tto host\n\t' + cleanHost
@@ -55,12 +55,12 @@ class ProxyServer
 				encoding = undefined if extName in ['.gif', '.png', '.jpg', '.jpeg']
 				baseNamePosition = fileName.lastIndexOf('.')
 				fileName = fileName.substr(0, baseNamePosition) + extName
-				if (isDirectory)
+				if isDirectory
 					fullPath = path.resolve(pathMapping, fileName)
-					console.log '\tto file in directory\n\t' + fullPath, 'encoding',  encoding
+					console.log '\tmapped to file in directory\n\t' + fullPath, 'encoding',  encoding
 					return fs.readFileSync(fullPath, encoding)
 				else
-					console.log '\tto file\n\t' + pathMapping, 'encoding', encoding
+					console.log '\tmapped to file\n\t' + pathMapping, 'encoding', encoding
 					return fs.readFileSync(pathMapping, encoding)
 				# Otherwise, treat it as an object and return JSON.
 			else
